@@ -948,4 +948,797 @@ resultat_opgave3 <- data.frame(
 
 resultat_opgave3
 
+# ============================================================
+#OPGAVE 4
+# ============================================================
+#Opgave 4.1 Illustration af forbrugertillid
+# ============================================================
+
+queryDST_1996 <- list(
+  INDIKATOR = "Forbrugertillidsindikatoren",
+  Tid = "*"
+)
+
+DSTRaw_1996 <- dst_get_data(
+  "FORV1",
+  query = queryDST_1996,
+  parse_dst_tid = FALSE
+)
+
+# Behold perioden fra januar 1996 til i dag
+DSTRaw_1996 <- DSTRaw_1996[
+  DSTRaw_1996$TID >= "1996M01",
+]
+
+# Lav data i bredt format
+DST_1996 <- data.frame(
+  Variabel = "Forbrugertillidsindikatoren",
+  t(DSTRaw_1996$value),
+  check.names = FALSE
+)
+
+colnames(DST_1996)[-1] <- DSTRaw_1996$TID
+
+
+# Omregn til kvartaler
+
+# Hent datoerne
+datoerDST_1996 <- colnames(DST_1996)[-1]
+
+# Lav datasæt til kvartaler
+DSTKvartal_1996 <- DST_1996
+
+# Lav månedskolonnerne om til numeric
+DSTKvartal_1996[, -1] <- lapply(
+  DSTKvartal_1996[, -1],
+  as.numeric
+)
+
+# Find år
+aarDST_1996 <- substr(datoerDST_1996, 1, 4)
+
+# Find måned
+maanedDST_1996 <- as.numeric(
+  substr(datoerDST_1996, 6, 7)
+)
+
+# Lav kvartalsnummer
+kvartalDST_1996 <- (maanedDST_1996 - 1) %/% 3 + 1
+
+# Lav kvartalsnavne
+kvartalNavnDST_1996 <- paste0(
+  aarDST_1996,
+  "Q",
+  kvartalDST_1996
+)
+
+# Beregn gennemsnittet for hvert kvartal
+DSTkvartalsData_1996 <- sapply(
+  unique(kvartalNavnDST_1996),
+  function(x) {
+    rowMeans(
+      DSTKvartal_1996[, -1][
+        , kvartalNavnDST_1996 == x,
+        drop = FALSE
+      ],
+      na.rm = TRUE
+    )
+  }
+)
+
+# Lav det endelige kvartalsdatasæt
+DSTKvartalsData_1996 <- data.frame(
+  kvartal = unique(kvartalNavnDST_1996),
+  DST_FTI = as.numeric(DSTkvartalsData_1996)
+)
+
+View(DSTKvartalsData_1996)
+
+#Plot
+par(xpd = FALSE)
+
+plot(
+  DSTKvartalsData_1996$DST_FTI,
+  type = "l",
+  lwd = 2,
+  xaxt = "n",
+  xlab = "År",
+  ylab = "Forbrugertillidsindikator",
+  main = "DST's forbrugertillidsindikator 1996 til i dag"
+)
+
+abline(h = 0, lty = 2)
+
+aarPosDST_1996 <- seq(
+  1,
+  nrow(DSTKvartalsData_1996),
+  by = 4
+)
+
+axis(
+  1,
+  at = aarPosDST_1996,
+  labels = substr(
+    DSTKvartalsData_1996$kvartal[aarPosDST_1996],
+    1,
+    4
+  ),
+  las = 2
+)
+
+#Find det højeste og laveste kvartal
+DSTKvartalsData_1996[
+  which.max(DSTKvartalsData_1996$DST_FTI),
+]
+
+DSTKvartalsData_1996[
+  which.min(DSTKvartalsData_1996$DST_FTI),
+]
+
+# ============================================================
+# Opgave 4.2
+# ============================================================
+# Gennemsnit af underspørgsmålet:
+# "Anskaffelse af større forbrugsgoder, fordelagtigt for øjeblikket"
+
+# Hent det præcise underspørgsmål fra FORV1
+FTIMeta$values
+
+querySpg4_2 <- list(
+  INDIKATOR = "Anskaffelse af større forbrugsgoder, fordelagtigt for øjeblikket",
+  Tid = "*"
+)
+
+spg4_2Raw <- dst_get_data(
+  "FORV1",
+  query = querySpg4_2,
+  parse_dst_tid = FALSE
+)
+
+# Lav data i bredt format
+spg4_2 <- data.frame(
+  Variabel = "Anskaffelse af større forbrugsgoder, fordelagtigt for øjeblikket",
+  t(spg4_2Raw$value),
+  check.names = FALSE
+)
+
+colnames(spg4_2)[-1] <- spg4_2Raw$TID
+
+# Hent datoerne
+datoerSpg4_2 <- colnames(spg4_2)[-1]
+
+# Lav datasæt til kvartaler
+spg4_2Kvartal <- spg4_2
+
+# Lav månedskolonnerne om til numeric
+spg4_2Kvartal[, -1] <- lapply(
+  spg4_2Kvartal[, -1],
+  as.numeric
+)
+
+# Find år
+aarSpg4_2 <- substr(
+  datoerSpg4_2,
+  1,
+  4
+)
+
+# Find måned
+maanedSpg4_2 <- as.numeric(
+  substr(
+    datoerSpg4_2,
+    6,
+    7
+  )
+)
+
+# Lav kvartalsnummer
+kvartalSpg4_2 <- (maanedSpg4_2 - 1) %/% 3 + 1
+
+# Lav kvartalsnavne
+kvartalNavnSpg4_2 <- paste0(
+  aarSpg4_2,
+  "Q",
+  kvartalSpg4_2
+)
+
+# Beregn gennemsnittet for hvert kvartal
+spg4_2KvartalsData <- sapply(
+  unique(kvartalNavnSpg4_2),
+  function(x) {
+    rowMeans(
+      spg4_2Kvartal[, -1][
+        , kvartalNavnSpg4_2 == x,
+        drop = FALSE
+      ],
+      na.rm = TRUE
+    )
+  }
+)
+
+# Lav datasæt med kvartal og værdi
+spg4_2Data <- data.frame(
+  kvartal = unique(kvartalNavnSpg4_2),
+  Spg4_2 = as.numeric(spg4_2KvartalsData)
+)
+
+# Behold perioden fra 2000Q1 til seneste mulige kvartal
+spg4_2Data <- spg4_2Data[
+  spg4_2Data$kvartal >= "2000Q1",
+]
+
+# Se datasættet
+View(spg4_2Data)
+
+# Beregn gennemsnittet for hele perioden
+gennemsnitSpg4_2 <- mean(
+  spg4_2Data$Spg4_2,
+  na.rm = TRUE
+)
+
+gennemsnitSpg4_2
+
+# ============================================================
+#Opgave 4.3
+# ============================================================
+#Hent data "Husholdningers forbrug på dansk område (11 gruppering) efter formål, prisenhed og tid"
+
+library(dkstat)
+
+dst_search("Husholdningers forbrug på dansk område")
+
+#Vi vælger NAHC21
+
+forbrug11Meta <- dst_meta("NAHC21")
+
+forbrug11Meta$variables
+str(forbrug11Meta$values)
+
+# Hent de 11 forbrugsgrupper
+queryForbrug11 <- list(
+  FORMAAAL = "*",
+  PRISENHED = "2020-priser, kædede værdier",
+  Tid = c("2020", "2022", "2023")
+)
+
+forbrug11Raw <- dst_get_data(
+  "NAHC21",
+  query = queryForbrug11,
+  parse_dst_tid = FALSE
+)
+
+# Fjern kategorien "I alt"
+forbrug11 <- forbrug11Raw[
+  forbrug11Raw$FORMAAAL != "CPT I alt",
+]
+
+# Fjern koderne foran kategorierne
+forbrug11$FORMAAAL <- sub(
+  "^[A-Z]{3} ",
+  "",
+  forbrug11$FORMAAAL
+)
+
+View(forbrug11)
+
+# Find den største forbrugsgruppe i 2022
+forbrug2022 <- forbrug11[
+  forbrug11$TID == "2022",
+]
+
+forbrug2022[
+  which.max(forbrug2022$value),
+]
+
+#Find, hvilken gruppe der steg mest fra 2020 til 2023
+#Lav 2 datasæt 
+forbrug4_3_2020 <- forbrug11[
+  forbrug11$TID == "2020",
+]
+
+forbrug4_3_2023 <- forbrug11[
+  forbrug11$TID == "2023",
+]
+
+#Match grupperne på FORMAAAL og beregn forskellen
+forbrug4_3_forskel <- data.frame(
+  FORMAAAL = forbrug4_3_2020$FORMAAAL,
+  forbrug2020 = forbrug4_3_2020$value,
+  forbrug2023 = forbrug4_3_2023$value
+)
+
+forbrug4_3_forskel$forskel <-
+  forbrug4_3_forskel$forbrug2023 -
+  forbrug4_3_forskel$forbrug2020
+
+View(forbrug4_3_forskel)
+
+forbrug4_3_forskel[
+  which.max(forbrug4_3_forskel$forskel),
+]
+
+# ============================================================
+# Opgave 4.4
+# ============================================================
+# Metadata for kvartalsvise 11 forbrugsgrupper
+
+library(dkstat)
+
+forbrug11KvartalMeta <- dst_meta("NKHC21")
+
+forbrug11KvartalMeta$variables
+
+str(forbrug11KvartalMeta$values)
+
+# Hent kvartalsdata for de 11 forbrugsgrupper
+valgForbrug11Kvartal <- list(
+  FORMAAAL = "*",
+  PRISENHED = "2020-priser, kædede værdier",
+  SÆSON = "Sæsonkorrigeret",
+  Tid = "*"
+)
+
+forbrug11KvartalRaw <- dst_get_data(
+  "NKHC21",
+  query = valgForbrug11Kvartal,
+  parse_dst_tid = FALSE
+)
+
+# Behold perioden 1999K1 til 2023K2
+forbrug11KvartalRaw <- forbrug11KvartalRaw[
+  forbrug11KvartalRaw$TID >= "1999K1" &
+    forbrug11KvartalRaw$TID <= "2023K2",
+]
+
+# Fjern kategorien "I alt"
+forbrug11Kvartal <- forbrug11KvartalRaw[
+  forbrug11KvartalRaw$FORMAAAL != "CPT I alt",
+]
+
+# Fjern koderne foran forbrugsgrupperne
+forbrug11Kvartal$FORMAAAL <- sub(
+  "^[A-Z]{3} ",
+  "",
+  forbrug11Kvartal$FORMAAAL
+)
+
+View(forbrug11Kvartal)
+
+nrow(forbrug11Kvartal)
+
+#Beregne årlig realvækst for hver af de 11 forbrugsgrupper
+
+# Sorter efter forbrugsgruppe og tid
+forbrug11Kvartal <- forbrug11Kvartal[
+  order(forbrug11Kvartal$FORMAAAL, forbrug11Kvartal$TID),
+]
+
+# Lav kolonne til årlig realvækst
+forbrug11Kvartal$realvaekst <- NA
+
+# Lav kolonne til realvækst
+forbrug11Kvartal$realvaekst <- NA
+
+# Find de 11 forbrugsgrupper
+forbrugsgrupper <- unique(forbrug11Kvartal$FORMAAAL)
+
+for (gruppe in forbrugsgrupper) {
+  
+  dataGruppe <- forbrug11Kvartal[
+    forbrug11Kvartal$FORMAAAL == gruppe,
+  ]
+  
+  dataGruppe$realvaekst[5:nrow(dataGruppe)] <-
+    (
+      dataGruppe$value[5:nrow(dataGruppe)] /
+        dataGruppe$value[1:(nrow(dataGruppe) - 4)]
+      - 1
+    ) * 100
+  
+  forbrug11Kvartal$realvaekst[
+    forbrug11Kvartal$FORMAAAL == gruppe
+  ] <- dataGruppe$realvaekst
+}
+
+View(forbrug11Kvartal)
+
+# Behold kun perioden til regressionerne
+forbrug11Regression <- forbrug11Kvartal[
+  forbrug11Kvartal$TID >= "2000K1" &
+    forbrug11Kvartal$TID <= "2023K2",
+]
+
+#Ændre K til Q, så kvartalsnavnene matcher de eksisterende i DI- og DST-data
+forbrug11Regression$kvartal <- gsub(
+  "K",
+  "Q",
+  forbrug11Regression$TID
+)
+
+# Tilføj DI's forbrugertillidsindikator
+forbrug11Regression$DI_FTI <- DI_FTI_data$DI_FTI[
+  match(
+    forbrug11Regression$kvartal,
+    DI_FTI_data$kvartal
+  )
+]
+
+# Tilføj DST's forbrugertillidsindikator
+forbrug11Regression$DST_FTI <- DSTKvartalsData$DST_FTI[
+  match(
+    forbrug11Regression$kvartal,
+    DSTKvartalsData$kvartal
+  )
+]
+
+View(forbrug11Regression)
+
+#22 simple lineære regressioner med loop
+# Find de 11 forbrugsgrupper
+forbrugsgrupper <- unique(forbrug11Regression$FORMAAAL)
+
+# Lav tomme lister til resultaterne
+summary_DI <- list()
+summary_DST <- list()
+
+#Loopet
+for (i in 1:length(forbrugsgrupper)) {
+  
+  gruppe <- forbrugsgrupper[i]
+  
+  dataGruppe <- forbrug11Regression[
+    forbrug11Regression$FORMAAAL == gruppe,
+  ]
+  
+  model_DI_4_4 <- lm(
+    realvaekst ~ DI_FTI,
+    data = dataGruppe
+  )
+  
+  model_DST_4_4 <- lm(
+    realvaekst ~ DST_FTI,
+    data = dataGruppe
+  )
+  
+  summary_DI[[i]] <- summary(model_DI_4_4)
+  
+  summary_DST[[i]] <- summary(model_DST_4_4)
+}
+
+names(summary_DI) <- forbrugsgrupper
+names(summary_DST) <- forbrugsgrupper
+
+names(summary_DI)
+names(summary_DST)
+
+#Resultater
+# Lav tom dataframe til resultaterne
+resultater4_4 <- data.frame(
+  FORMAAAL = forbrugsgrupper,
+  DI_koefficient = NA,
+  DI_pvaerdi = NA,
+  DI_R2 = NA,
+  DST_koefficient = NA,
+  DST_pvaerdi = NA,
+  DST_R2 = NA
+)
+
+#Udfyld dataframe med loop
+for (i in 1:length(forbrugsgrupper)) {
+  
+  # DI
+  resultater4_4$DI_koefficient[i] <-
+    summary_DI[[i]]$coefficients["DI_FTI", "Estimate"]
+  
+  resultater4_4$DI_pvaerdi[i] <-
+    summary_DI[[i]]$coefficients["DI_FTI", "Pr(>|t|)"]
+  
+  resultater4_4$DI_R2[i] <-
+    summary_DI[[i]]$r.squared
+  
+  
+  # DST
+  resultater4_4$DST_koefficient[i] <-
+    summary_DST[[i]]$coefficients["DST_FTI", "Estimate"]
+  
+  resultater4_4$DST_pvaerdi[i] <-
+    summary_DST[[i]]$coefficients["DST_FTI", "Pr(>|t|)"]
+  
+  resultater4_4$DST_R2[i] <-
+    summary_DST[[i]]$r.squared
+}
+
+View(resultater4_4)
+
+#Sortere tabellen
+resultater4_4[
+  order(resultater4_4$DI_R2, decreasing = TRUE),
+]
+
+resultater4_4[
+  order(resultater4_4$DST_R2, decreasing = TRUE),
+]
+
+View(resultater4_4)
+
+
+# ============================================================
+OPGAVE 5
+# ============================================================
+
+library(stringr)
+library(dplyr)
+library(eurostat)
+library(ggplot2)
+library(restatapi)
+
+allTabs <- get_eurostat_toc()
+
+# søg efter husholdningernes forbrug
+forbrugTabs <- allTabs |> filter(str_detect(title,regex("household final consumption expenditure",ignore_case=T)))
+
+forbrugTabs
+
+# undersøg relevant tabel
+tab1="namq_10_fcs"
+meta1 <- get_eurostat_dsd(tab1)
+
+unique(meta1$concept)
+names(meta1)
+
+freqM <- meta1 |> filter(concept=="freq")
+freqM
+
+unitM <- meta1 |> filter(concept=="unit")
+unitM
+
+itemM <- meta1 |> filter(concept=="na_item")
+itemM
+
+sadjM <- meta1 |> filter(concept=="s_adj")
+sadjM
+
+geoM <- meta1 |> filter(concept=="geo")
+geoM
+
+# ============================================================
+# Opgave 5.1
+# ============================================================
+
+lande <- c("DK","BE","NL","SE","AT","DE","FR","IT","ES")
+
+df51 <- get_eurostat("namq_10_fcs",time_format="num")
+
+df51 <- df51 |> filter(geo %in% lande,freq=="Q",na_item=="P31_S14", unit=="CLV_PCH_SM", s_adj=="SCA",TIME_PERIOD>=2000)
+
+View(df51)
+
+# kontroller data
+unique(df51$geo)
+min(df51$TIME_PERIOD)
+max(df51$TIME_PERIOD)
+sum(is.na(df51$values))
+table(df51$geo)
+
+# landenavne
+df51 <- df51 |> mutate(land=case_when(
+  geo=="DK" ~ "Danmark",
+  geo=="BE" ~ "Belgien",
+  geo=="NL" ~ "Holland",
+  geo=="SE" ~ "Sverige",
+  geo=="AT" ~ "Østrig",
+  geo=="DE" ~ "Tyskland",
+  geo=="FR" ~ "Frankrig",
+  geo=="IT" ~ "Italien",
+  geo=="ES" ~ "Spanien"))
+
+# lav kvartal
+df51 <- df51 |> mutate(aar=floor(TIME_PERIOD),
+                       kvartal_nr=round((TIME_PERIOD-aar)*4)+1,
+                       kvartal=paste0(aar,"Q",kvartal_nr))
+
+# endeligt datasæt
+opgave51 <- df51 |> select(land,kvartal,realvaekst=values)
+
+View(opgave51)
+
+# lav rækkefølge på kvartaler
+kvartaler <- unique(opgave51$kvartal)
+
+opgave51$kvartal <- factor(opgave51$kvartal, levels = kvartaler)
+
+# vis kun nogle kvartaler på x-aksen
+x_labels <- kvartaler[
+  seq(
+    1,
+    length(kvartaler),
+    by = 8
+  )
+]
+
+# lav graf
+ggplot(
+  opgave51,
+  aes(
+    x = kvartal,
+    y = realvaekst,
+    group = land,
+    color = land
+  )
+) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed"
+  ) +
+  geom_line() +
+  scale_x_discrete(
+    breaks = x_labels
+  ) +
+  labs(
+    title = "Kvartalsvis årlig realvækst i husholdningernes forbrug",
+    subtitle = "2000Q1 - 2026Q2",
+    x = "Kvartal",
+    y = "Årlig realvækst (%)",
+    color = "Land",
+    caption = "Kilde: Eurostat, namq_10_fcs"
+  ) +
+  theme_minimal()
+
+# ============================================================
+#Opgave 5.2 – Højeste kvartalsvise årlige realvækst
+# ============================================================
+
+#Beregn gennemsnitlig realvækst pr kland
+gennemsnit52 <- opgave51 |> group_by(land) |> summarise(gennemsnit=mean(realvaekst))
+
+gennemsnit52 <- gennemsnit52 |> arrange(desc(gennemsnit))
+
+gennemsnit52$gennemsnit <- round(gennemsnit52$gennemsnit,2)
+
+gennemsnit52
+
+# landet med højest gennemsnit
+gennemsnit52[1,]
+
+#Lave til en DF
+tabel52 <- gennemsnit52
+
+names(tabel52) <- c("Land","Gennemsnitlig realvækst")
+
+tabel52
+
+#Simpel graf
+
+ggplot(gennemsnit52,aes(x=reorder(land,gennemsnit),y=gennemsnit))+
+  geom_col()+
+  geom_text(aes(label=round(gennemsnit,2)),
+            hjust=-0.1,
+            size=4)+
+  coord_flip()+
+  labs(
+    title="Gennemsnitlig kvartalsvis årlig realvækst",
+    x="Land",
+    y="Gennemsnitlig realvækst (%)",
+    caption="Kilde: Eurostat, namq_10_fcs"
+  )+
+  ylim(0,max(gennemsnit52$gennemsnit)+0.3)+
+  theme_minimal()
+
+# ============================================================
+# Opgave 5.3
+# ============================================================
+
+# vi definerer coronaperioden
+corona <- c("2020Q1","2020Q2","2020Q3","2020Q4","2021Q1","2021Q2","2021Q3","2021Q4")
+
+# fjern coronaperioden
+uden_corona <- opgave51 |> filter(!kvartal %in% corona)
+
+# gennemsnit med corona
+med_corona <- opgave51 |> group_by(land) |> summarise(med_corona=mean(realvaekst))
+
+# gennemsnit uden corona
+uden_corona_gns <- uden_corona |> group_by(land) |> summarise(uden_corona=mean(realvaekst))
+
+# saml resultater
+corona_effekt <- merge(med_corona,uden_corona_gns,by="land")
+
+# beregn forskellen
+corona_effekt <- corona_effekt |> mutate(forskel=uden_corona-med_corona, absolut_forskel=abs(forskel))
+
+# sorter efter størst effekt
+corona_effekt <- corona_effekt |> arrange(desc(absolut_forskel))
+
+# afrund
+corona_effekt$med_corona <- round(corona_effekt$med_corona,2)
+corona_effekt$uden_corona <- round(corona_effekt$uden_corona,2)
+corona_effekt$forskel <- round(corona_effekt$forskel,2)
+corona_effekt$absolut_forskel <- round(corona_effekt$absolut_forskel,2)
+
+corona_effekt
+
+# landet med størst effekt
+corona_effekt[1,]
+
+
+#Graf
+
+ggplot(corona_effekt, aes(x = reorder(land, absolut_forskel), y = forskel)) +
+  geom_col() +
+  geom_text(aes(label = round(forskel, 2)), hjust = -0.1) +
+  coord_flip() +
+  ylim(min(corona_effekt$forskel) - 0.1, max(corona_effekt$forskel) + 0.1) +
+  labs(
+    title = "Coronakrisens effekt på gennemsnitlig årlig realvækst",
+    subtitle = "Forskel mellem gennemsnit med og uden coronaperioden",
+    x = "Land",
+    y = "Forskel i procentpoint",
+    caption = "Kilde: Eurostat, namq_10_fcs"
+  ) +
+  theme_minimal()
+
+# ============================================================
+# Opgave 5.4
+# ============================================================
+
+# lav liste med landekoder
+europa <- geoM |>
+  filter(!code %in% c("EU27_2020","EA","EA21","EA20","EA19","EA12")) |> pull(code)
+
+europa
+
+# hent data 
+df54 <- get_eurostat("namq_10_fcs",time_format="num")
+
+df54 <- df54 |>
+  filter(geo %in% europa,
+         freq=="Q",
+         na_item=="P31_S14",
+         unit=="CLV_PCH_SM",
+         s_adj=="SCA",
+         TIME_PERIOD>=2020,
+         TIME_PERIOD<=2023.25)
+
+View(df54)
+
+# kontroller data
+unique(df54$geo)
+table(df54$geo)
+sum(is.na(df54$values))
+min(df54$TIME_PERIOD)
+max(df54$TIME_PERIOD)
+
+# hvilke lande mangler data?
+setdiff(europa,unique(df54$geo))
+
+# gennemsnit pr. land
+gennemsnit54 <- df54 |> group_by(geo) |> summarise(gennemsnit=mean(values))
+
+# få landenavne fra metadata
+landenavne <- geoM |> select(code,name)
+
+gennemsnit54 <- gennemsnit54 |> left_join(landenavne,by=c("geo"="code"))
+
+# sorter fra laveste til højeste
+gennemsnit54 <- gennemsnit54 |> arrange(gennemsnit)
+
+gennemsnit54$gennemsnit <- round(gennemsnit54$gennemsnit,2)
+
+gennemsnit54
+
+# de 10 lande med lavest gennemsnit
+laveste10 <- gennemsnit54 |> slice(1:10)
+
+ggplot(laveste10,aes(x=reorder(name,gennemsnit),y=gennemsnit))+
+  geom_col()+
+  coord_flip()+
+  geom_hline(yintercept=0,linetype="dashed")+
+  geom_text(aes(label=gennemsnit),hjust=-0.1)+
+  labs(
+    title="Laveste gennemsnitlige realvækst i husholdningernes forbrug",
+    subtitle="2020Q1 - 2023Q2",
+    x="Land",
+    y="Gennemsnitlig årlig realvækst (%)",
+    caption="Kilde: Eurostat, namq_10_fcs")+
+  theme_minimal()
 
